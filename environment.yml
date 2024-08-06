@@ -1,0 +1,17 @@
+name: nepta
+channels:
+   - conda-forge
+   - defaults
+dependencies:
+  - python=3.12
+  - numpy
+  - pandas
+  - pip
+  - pip:
+     - ipykernel
+     - ipython
+     - ipython-genutils
+     - ipywidgets
+     - jupyter_core
+     - jupyterlab
+     - notebook

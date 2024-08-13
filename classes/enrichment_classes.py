@@ -1,4 +1,4 @@
-import re
+from .utilities import clean_enrichment_name
 
 class student:
 
@@ -9,9 +9,7 @@ class student:
         self.name = name
         self.teacher = teacher
         self.enrichment_preference = {
-            1: None,
-            2: None,
-            3: None
+            1: None
         }
 
     def assign_preference(self, rank, enrichment_program):
@@ -20,10 +18,7 @@ class student:
 class enrichment:
     def __init__(self, enrichment_name, min_size=8, max_size=12, waitlist_size=4):
         # defaults are minimum 8 students and max 12
-        enrichment_name_pattern = r':\s*(.*?)\s*\('
-        rematch = re.search(enrichment_name_pattern, enrichment_name)
-        self.raw_name = enrichment_name
-        self.name = rematch.group(1)
+        self.name = clean_enrichment_name(enrichment_name)
         self.min_size = min_size
         self.max_size = max_size
         self.waitlist_size = waitlist_size

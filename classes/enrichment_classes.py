@@ -2,12 +2,11 @@ import re
 
 class student:
 
-    def __init__(self, email, grade, age, name, parent, teacher):
+    def __init__(self, email, grade, age, name, teacher):
         self.email = email
         self.grade = grade
         self.age = age
         self.name = name
-        self.parent = parent
         self.teacher = teacher
         self.enrichment_preference = {
             1: None,

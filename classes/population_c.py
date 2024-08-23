@@ -1,47 +1,61 @@
 import random
 import pandas as pd
 import numpy as np
-from .utilities import clean_enrichment_name
+import copy
+
+from .enrichment_c import enrichment
 
 class population:
 
     def __init__(self, student_list, enrichments):
         self.students = student_list
-        self.enrichments = enrichment
+        self.enrichment = enrichments
         self.mutation_probability = 0.10
         self.penalty_history = []
 
         for x in self.students:
             x.randomize_assignment()
 
+    def set_mutation_prob(self):
+        """returns the mutation rate for each round of evolution"""
+        n = len(self.students)
+        alpha = [(x+1)/n for x in range(20)]
+        return random.choice(alpha)
 
-    def genome(self):
+
+    def genome(self, student_list):
         """returns current genome for population"""
-        return [x.assignment for x in self.students]
+        return [x.assignment for x in student_list]
 
     def evolve(self, number_steps):
-        f = self.compute_penalty()
+        f = self.compute_penalty(self.students)
         self.penalty_history = [f]
-        for x in range(number_steps):
-            s_old = self.students.copy()
-            self.mutate()
-            f_prime = self.compute_penalty()
+        reporting_steps = np.round(number_steps/10)
 
-            if f_prime >= f:
-                self.students = s_old
-            else:
+        for x in range(number_steps):
+            m = self.set_mutation_prob()
+            s_old = copy.deepcopy(self.students)
+
+            self.mutate(m)
+            f_prime = self.compute_penalty(self.students)
+
+            if f_prime < f:
                 f = f_prime
+            else:
+                self.students = s_old
 
             self.penalty_history.append(f)
-            if np.mod(x, 100) == 0:
-                print(f"Penalty of: {f}")
 
-        return f
+            if np.mod(x, reporting_steps) == 0:
+                print(f"Step {x}, mutation_rate: {m}, computed penalty: {self.compute_penalty(self.students)}")
 
-    def mutate(self):
+        return
+
+    def mutate(self, mut_prob):
         for s in self.students:
-            if random.random() < self.mutation_probability:
+            if random.random() < mut_prob:
                 s.randomize_assignment()
+        return
 
     def enrichment_ranking_summary(self):
         """Returns a summary of how many students ranked each class 1st, 2nd, etc.
@@ -62,16 +76,16 @@ class population:
         agg_c_pvt["total"] = agg_c_pvt.sum(axis=1)
         return agg_c_pvt.sort_values(by=["total"], ascending=False)
 
-    def class_counts(self):
+    def class_counts(self, student_list):
         enrichment_choices = [
-            {"enrichment": s.retrieve_assignment()} for s in self.students
+            {"enrichment": s.retrieve_assignment()} for s in student_list
         ]
 
         enrichment__counter_df = pd.DataFrame(enrichment_choices)
         edf_count = enrichment__counter_df.groupby("enrichment")["enrichment"].count()
         return edf_count
 
-    def compute_penalty(self):
+    def compute_penalty(self, student_list):
         """Computes current cost structure of genome
         -- cost of a ranked choice is rank - 1
         -- there is a penalty of +class max per each student over the class maximum
@@ -79,47 +93,23 @@ class population:
         -- each student waitlisted gets a penalty of last ranked + 1
         """
 
+        g = self.genome(student_list)
+
         #1st compute penalty associated with each choice
-        choice_score = np.sum([4 if x == 0 else x-1 for x in self.genome()])
+        choice_score = np.sum([x-1 if x > 0 else 0 for x in g])
 
         #class exceed maximum score
-        edf_count = self.class_counts()
+        edf_count = self.class_counts(student_list)
+
+        #compute a penalty for each student on wait list
+        waitlist_penalty =  np.sum([x==0 for x in g])**2
 
         class_size_penalty = 0
 
         for e in edf_count.index:
             if edf_count[e] > 12:
-                class_size_penalty += 5 * (edf_count[e] - 12)
+                class_size_penalty += 10 * (edf_count[e] - 12)
             elif edf_count[e] < 8:
-                class_size_penalty += (8 - edf_count[e]) * 5
+                class_size_penalty += (8 - edf_count[e]) * 10
 
-        return choice_score + class_size_penalty
-
-class student:
-
-    def __init__(self, email, grade, age, name, teacher):
-        self.email = email
-        self.grade = grade
-        self.age = age
-        self.name = name
-        self.teacher = teacher
-        self.assignment = 0
-        self.enrichment_preference = {
-            0: "waitlist"
-        }
-
-    def retrieve_assignment(self):
-        return self.enrichment_preference[self.assignment]
-
-    def assign_preference(self, rank, enrichment_program):
-        self.enrichment_preference[rank] = enrichment_program
-
-    def randomize_assignment(self):
-        self.assignment = random.randint(0, len(self.enrichment_preference.keys()) - 1)
-
-class enrichment:
-    def __init__(self, enrichment_name, min_size=8, max_size=12):
-        # defaults are minimum 8 students and max 12
-        self.name = clean_enrichment_name(enrichment_name)
-        self.min_size = min_size
-        self.max_size = max_size
+        return choice_score + class_size_penalty + waitlist_penalty

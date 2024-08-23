@@ -1,5 +1,6 @@
 import re
-from .enrichment_classes import student
+from .student_c import student
+
 
 def clean_enrichment_name(enrichment_raw):
     """Cleans up enrichment name string"""

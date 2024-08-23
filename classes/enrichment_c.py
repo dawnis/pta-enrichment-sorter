@@ -7,3 +7,5 @@ class enrichment:
         self.name = clean_enrichment_name(enrichment_name)
         self.min_size = min_size
         self.max_size = max_size
+        self.timeslot = ['T']
+        self.gradelevel = 2

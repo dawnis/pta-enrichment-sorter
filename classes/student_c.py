@@ -12,6 +12,7 @@ class student:
         self.name = name
         self.teacher = teacher
         self.assignment = 0
+        self.slots = []
         self.enrichment_preference = {
             0: "waitlist"
         }
@@ -24,3 +25,8 @@ class student:
 
     def randomize_assignment(self):
         self.assignment = random.randint(0, np.max([x for x in self.enrichment_preference.keys()]))
+
+
+    def max_possible_slots(self, enrichment_list):
+        """Computes possible slots"""
+        pass

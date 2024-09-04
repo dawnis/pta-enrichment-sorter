@@ -16,28 +16,25 @@ class population:
         for x in self.students:
             invalid_ranks = []
             for (r, e) in x.enrichment_preference.items():
-                if e == 'waitlist':
+                if e.name == 'waitlist':
                     continue
 
-                if x.grade not in self.enrichment[e].gradelevel:
+                if x.grade not in e.gradelevel:
                     invalid_ranks.append(r)
 
             for rank in invalid_ranks:
-                print(f"Warning! {x.name} (grade {x.grade} signed up for {x.enrichment_preference[rank]} (grades {self.enrichment[e].gradelevel}) -- preference is removed")
+                print(f"Warning! {x.name} (grade {x.grade} signed up for {x.enrichment_preference[rank].name} (grades {x.enrichment_preference[rank].gradelevel}) -- preference is removed")
                 del x.enrichment_preference[rank]
 
             if len(invalid_ranks) > 0:
-               print(f"remaining preferences are {x.enrichment_preference}")
+                remaining_names = [x.name if x.name != 'waitlist' else '' for (r, x) in x.enrichment_preference.items()]
+                print(f"Remaining preferences are {", ".join(remaining_names)}")
 
-        #for each student, determine the number of days they can go based on their prefs
+        #for each student, add a waitlist assignment for each day they can go to enrichment
         for x in self.students:
-            slots = []
             for (r, e) in x.enrichment_preference.items():
-                if e != 'waitlist':
-                    slots.append(self.enrichment[e].timeslot)
-
-            x.slots = list(set(slots))
-
+                if e.name != 'waitlist':
+                    x.assignment.update({e.timeslot: 0})
 
         for x in self.students:
             x.randomize_assignment()
@@ -47,7 +44,6 @@ class population:
         n = len(self.students)
         alpha = [(x+1)/n for x in range(20)]
         return random.choice(alpha)
-
 
     def genome(self, student_list):
         """returns current genome for population"""

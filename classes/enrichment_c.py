@@ -1,5 +1,8 @@
 import re
 
+def gen_waitlist():
+    """Generates a dummy class called waitlist"""
+    return enrichment("1st, 2nd, 3rd, 4th, 5th graders: waitlist (Sundays, $00)")
 
 class enrichment:
     def __init__(self, enrichment_name, min_size=8, max_size=12):
@@ -10,6 +13,11 @@ class enrichment:
         self.timeslot = regex_timeslot(enrichment_name)
         self.gradelevel = regex_grades(enrichment_name)
 
+    def __str__(self):
+        return (f"{self.name}")
+
+    def __repr__(self):
+        return (f"{self.name}")
 
 def clean_enrichment_name(enrichment_raw):
     """Cleans up enrichment name string"""
@@ -25,7 +33,7 @@ def regex_grades(enrichment_raw):
 
 def regex_timeslot(enrichment_raw):
     """Pulls the meeting day from the enrichment title"""
-    weekday_pattern = "(?i)(?:Monday|Tuesday|Wednesday|Thursday|Friday)"
+    weekday_pattern = "(?i)(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)"
     matches = re.findall(weekday_pattern, enrichment_raw)
     return matches[0]
 

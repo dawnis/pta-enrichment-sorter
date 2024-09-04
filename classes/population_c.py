@@ -43,6 +43,29 @@ class population:
         for x in self.students:
             x.randomize_assignment()
 
+    def display_student(self, student_name):
+        student_lookup = filter(lambda x: x.name.lower().startswith(student_name.lower()), self.students)
+        for s in student_lookup:
+            print(s)
+        return
+
+    def get_waitlist_only(self):
+        """Returns a list of students who are only assigned to waitlist"""
+        s = []
+        for student in self.students:
+            preferences = [x for (k, x) in student.assignment.items()]
+            if np.sum(preferences) == 0:
+                s.append(student)
+
+        return s
+
+    def display_current_waitlist(self):
+        waitlist = self.get_waitlist_only()
+        for student in waitlist:
+            print(student)
+            print("\n")
+        return
+
     def set_mutation_prob(self):
         """returns the mutation rate for each round of evolution"""
         n = len(self.students)
@@ -123,7 +146,21 @@ class population:
                     {"enrichment": str(s.enrichment_preference[rank]), "name": s.name}
                 )
         counter_df = pd.DataFrame(class_assignment_list)
-        edf_count = counter_df.groupby(["enrichment"])["name"].count()
+
+        #need to filter out students assigned to any class for waitlisted population
+        waitlist = counter_df.query("enrichment == 'waitlist'").copy()
+        nonwaitlist = counter_df.query("enrichment != 'waitlist'").copy()
+        waitlist_only = pd.DataFrame(set(waitlist.name) - set(nonwaitlist.name), columns = ['name'])
+
+        waitlist_filt = pd.merge(waitlist,
+                                 waitlist_only,
+                                 on = ['name'],
+                                 how = 'inner').drop_duplicates().copy()
+
+        counter_df_filt = pd.concat([nonwaitlist, waitlist_filt], axis=0)
+
+
+        edf_count = counter_df_filt.groupby(["enrichment"])["name"].nunique()
         return edf_count.reset_index()
 
     def compute_penalty(self, student_list):
@@ -145,7 +182,8 @@ class population:
         edf_counts = pd.merge(edf_count, e_limits, on=['enrichment'])
 
         #compute a penalty for each student on wait list
-        waitlist_penalty =  self.waitlist_penalty(student_list)
+        waitlist_penalty =  len(self.get_waitlist_only())**2
+
         class_size_penalty = 0
         for (idxx, row) in edf_counts.iterrows():
             if row['name'] > row['max']:
@@ -168,14 +206,3 @@ class population:
                 penalty += np.mean([x-1 for x in filt_prefs])
 
         return penalty
-
-
-    def waitlist_penalty(self, student_list):
-        """computes the penalty for waitlisted students"""
-        penalty = 0
-        for student in student_list:
-            preferences = [x for (k, x) in student.assignment.items()]
-            if np.sum(preferences) == 0:
-               penalty += 1
-
-        return penalty**2

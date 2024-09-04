@@ -1,12 +1,5 @@
-import re
+from .enrichment_c import clean_enrichment_name
 from .student_c import student
-
-
-def clean_enrichment_name(enrichment_raw):
-    """Cleans up enrichment name string"""
-    enrichment_name_pattern = r':\s*(.*?)\s*\('
-    rematch = re.search(enrichment_name_pattern, enrichment_raw)
-    return rematch.group(1)
 
 def process_registration_form(df_csv):
     """Returns a list of student from the registration form"""
@@ -32,7 +25,7 @@ def process_registration_form(df_csv):
             preference = row[f"Rank your child's {str} choice of classes"]
 
             if preference == preference:
-                s.assign_preference(ranking+1, clean_enrichment_name(preference))
+                s.assign_preference(ranking + 1, clean_enrichment_name(preference))
 
         student_list.append(s)
 

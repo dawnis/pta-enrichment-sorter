@@ -7,6 +7,15 @@ from classes.enrichment_c import gen_waitlist
 class student:
 
     def __init__(self, email, grade, age, name, teacher):
+        """
+        :param email: str
+        :param grade: str
+        :param age: int
+        :param name: str
+        :param teacher: str
+        :field assignment: dict{ day_of_week_str: ranking_int}
+        :field enrichment_preference: dict{ ranking_int: enrichment_obj }
+        """
         self.email = email
         self.grade = grade
         self.age = age
@@ -18,9 +27,13 @@ class student:
         }
 
     def __str__(self):
-        enrichments_assigned = "\n".join([
-            self.enrichment_preference[self.assignment[x]].name for x in self.assignment.keys()
-        ])
+
+        enrichments_assigned_rankings = []
+        for (k, v) in self.assignment.items():
+            if v != 0:
+                enrichments_assigned_rankings.append(v)
+
+        enrichments_assigned = ", ".join([str(self.enrichment_preference[x]) + f" ({self.enrichment_preference[x].timeslot} - Rank {x})" for x in enrichments_assigned_rankings])
 
         possible_days = ", ".join(self.assignment.keys())
 

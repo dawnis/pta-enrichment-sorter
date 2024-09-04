@@ -43,11 +43,22 @@ class population:
         for x in self.students:
             x.randomize_assignment()
 
+    def report_multi_asignments(self):
+        """Reports any students with multiple assignments"""
+        for student in self.students:
+            preferences = [x for (k, x) in student.assignment.items()]
+            num_assignments = np.sum(list(map(lambda x: x != 0, preferences)))
+            if num_assignments > 1:
+                print(student)
+                print("\n")
+        return
+
     def display_student(self, student_name):
         student_lookup = filter(lambda x: x.name.lower().startswith(student_name.lower()), self.students)
         for s in student_lookup:
             print(s)
-        return
+            student = s
+        return student
 
     def get_waitlist_only(self):
         """Returns a list of students who are only assigned to waitlist"""
@@ -56,7 +67,6 @@ class population:
             preferences = [x for (k, x) in student.assignment.items()]
             if np.sum(preferences) == 0:
                 s.append(student)
-
         return s
 
     def display_current_waitlist(self):
@@ -190,6 +200,8 @@ class population:
                 class_size_penalty += 10 * (row['name'] - row['max'])
             elif row['name'] < row['min']:
                 class_size_penalty += (row['min'] - row['name']) * 10
+            elif row['enrichment'] != 'waitlist':
+                class_size_penalty += row['max'] - row['name'] #add a flat penalty for each unfilled spot
 
         return choice_score + class_size_penalty + waitlist_penalty
 

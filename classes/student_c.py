@@ -17,6 +17,13 @@ class student:
             0: "waitlist"
         }
 
+    def __str__(self):
+        return (f"Name: {self.name}\n"
+                f"Grade: {self.grade}\n"
+                f"Enrichments Assigned: {self.enrichment_preference[self.assignment]}\n"
+                f"Possible Days: {self.slots}\n"
+                f"Rankings: {self.enrichment_preference}")
+
     def retrieve_assignment(self):
         return self.enrichment_preference[self.assignment]
 
@@ -26,7 +33,3 @@ class student:
     def randomize_assignment(self):
         self.assignment = random.randint(0, np.max([x for x in self.enrichment_preference.keys()]))
 
-
-    def max_possible_slots(self, enrichment_list):
-        """Computes possible slots"""
-        pass

@@ -21,7 +21,7 @@ def regex_grades(enrichment_raw):
     """Gets the grade levels from the raw enrichment name"""
     grade_pattern = r'^(.*?) graders\s?:'
     gmatch = re.search(grade_pattern, enrichment_raw)
-    return [x.strip() for x in gmatch.group(1).split(",")]
+    return [x.strip()[0] for x in gmatch.group(1).split(",")]
 
 def regex_timeslot(enrichment_raw):
     """Pulls the meeting day from the enrichment title"""

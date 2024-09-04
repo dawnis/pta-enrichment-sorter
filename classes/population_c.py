@@ -10,8 +10,34 @@ class population:
     def __init__(self, student_list, enrichments):
         self.students = student_list
         self.enrichment = enrichments
-        self.mutation_probability = 0.10
         self.penalty_history = []
+
+        #for each student, check if they signed up for grade appropriate enrichments. Flag if there is a problem
+        for x in self.students:
+            invalid_ranks = []
+            for (r, e) in x.enrichment_preference.items():
+                if e == 'waitlist':
+                    continue
+
+                if x.grade not in self.enrichment[e].gradelevel:
+                    invalid_ranks.append(r)
+
+            for rank in invalid_ranks:
+                print(f"Warning! {x.name} (grade {x.grade} signed up for {x.enrichment_preference[rank]} (grades {self.enrichment[e].gradelevel}) -- preference is removed")
+                del x.enrichment_preference[rank]
+
+            if len(invalid_ranks) > 0:
+               print(f"remaining preferences are {x.enrichment_preference}")
+
+        #for each student, determine the number of days they can go based on their prefs
+        for x in self.students:
+            slots = []
+            for (r, e) in x.enrichment_preference.items():
+                if e != 'waitlist':
+                    slots.append(self.enrichment[e].timeslot)
+
+            x.slots = list(set(slots))
+
 
         for x in self.students:
             x.randomize_assignment()

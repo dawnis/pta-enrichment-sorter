@@ -2,7 +2,7 @@ import re
 
 def gen_waitlist():
     """Generates a dummy class called waitlist"""
-    return enrichment("1st, 2nd, 3rd, 4th, 5th graders: waitlist (Sundays, $00)")
+    return enrichment("1st, 2nd, 3rd, 4th, 5th graders: waitlist (Sundays, $00)", min_size=0, max_size=1000)
 
 class enrichment:
     def __init__(self, enrichment_name, min_size=8, max_size=12):

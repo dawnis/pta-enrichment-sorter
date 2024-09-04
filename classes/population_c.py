@@ -3,13 +3,17 @@ import pandas as pd
 import numpy as np
 import copy
 
-from .enrichment_c import enrichment
+from .enrichment_c import enrichment, gen_waitlist
+
 
 class population:
 
     def __init__(self, student_list, enrichments):
         self.students = student_list
         self.enrichment = enrichments
+
+        #add waitlist into the list of enrichments
+        self.enrichment.update({"waitlist": gen_waitlist()})
         self.penalty_history = []
 
         #for each student, check if they signed up for grade appropriate enrichments. Flag if there is a problem
@@ -75,8 +79,7 @@ class population:
 
     def mutate(self, mut_prob):
         for s in self.students:
-            if random.random() < mut_prob:
-                s.randomize_assignment()
+            s.randomize_assignment(mut_prob)
         return
 
     def enrichment_ranking_summary(self):
@@ -89,7 +92,7 @@ class population:
                 if r != 0:
                     ers.append ({
                         "name": s.name,
-                        "class_name": s.enrichment_preference[r],
+                        "class_name": str(s.enrichment_preference[r]),
                         "ranking": r
                     })
         agg = pd.DataFrame(ers)
@@ -98,14 +101,30 @@ class population:
         agg_c_pvt["total"] = agg_c_pvt.sum(axis=1)
         return agg_c_pvt.sort_values(by=["total"], ascending=False)
 
-    def class_counts(self, student_list):
-        enrichment_choices = [
-            {"enrichment": s.retrieve_assignment()} for s in student_list
-        ]
+    def enrichment_limits(self):
+        """Computes dataframe with min/max size for each enrichment class to aid in computing penalty"""
+        e_frame = []
+        for (k, e) in self.enrichment.items():
+            e_frame.append(
+                {"enrichment": e.name,
+                 "min": e.min_size,
+                 "max": e.max_size
+                 }
+            )
+        return pd.DataFrame(e_frame)
 
-        enrichment__counter_df = pd.DataFrame(enrichment_choices)
-        edf_count = enrichment__counter_df.groupby("enrichment")["enrichment"].count()
-        return edf_count
+    def class_counts(self, student_list):
+
+        class_assignment_list = []
+
+        for s in student_list:
+            for (day, rank) in s.assignment.items():
+                class_assignment_list.append(
+                    {"enrichment": str(s.enrichment_preference[rank]), "name": s.name}
+                )
+        counter_df = pd.DataFrame(class_assignment_list)
+        edf_count = counter_df.groupby(["enrichment"])["name"].count()
+        return edf_count.reset_index()
 
     def compute_penalty(self, student_list):
         """Computes current cost structure of genome
@@ -115,23 +134,48 @@ class population:
         -- each student waitlisted gets a penalty of last ranked + 1
         """
 
-        g = self.genome(student_list)
+        # g = self.genome(student_list)
 
         #1st compute penalty associated with each choice
-        choice_score = np.sum([x-1 if x > 0 else 0 for x in g])
+        choice_score = self.rank_choice_penalty(student_list)
 
-        #class exceed maximum score
+        #compute scores for determining if class size bounds (min or max) are violated
         edf_count = self.class_counts(student_list)
+        e_limits = self.enrichment_limits()
+        edf_counts = pd.merge(edf_count, e_limits, on=['enrichment'])
 
         #compute a penalty for each student on wait list
-        waitlist_penalty =  np.sum([x==0 for x in g])**2
-
+        waitlist_penalty =  self.waitlist_penalty(student_list)
         class_size_penalty = 0
-
-        for e in edf_count.index:
-            if edf_count[e] > 12:
-                class_size_penalty += 10 * (edf_count[e] - 12)
-            elif edf_count[e] < 8:
-                class_size_penalty += (8 - edf_count[e]) * 10
+        for (idxx, row) in edf_counts.iterrows():
+            if row['name'] > row['max']:
+                class_size_penalty += 10 * (row['name'] - row['max'])
+            elif row['name'] < row['min']:
+                class_size_penalty += (row['min'] - row['name']) * 10
 
         return choice_score + class_size_penalty + waitlist_penalty
+
+
+    def rank_choice_penalty(self, student_list):
+        """Computes the summed average penalty for each student's ranking, skipping zeros"""
+        penalty = 0
+        for student in student_list:
+            preferences = [x for (k, x) in student.assignment.items()]
+            if np.sum(preferences) == 0:
+                continue
+            else:
+                filt_prefs = filter(lambda a: a != 0, preferences)
+                penalty += np.mean([x-1 for x in filt_prefs])
+
+        return penalty
+
+
+    def waitlist_penalty(self, student_list):
+        """computes the penalty for waitlisted students"""
+        penalty = 0
+        for student in student_list:
+            preferences = [x for (k, x) in student.assignment.items()]
+            if np.sum(preferences) == 0:
+               penalty += 1
+
+        return penalty**2

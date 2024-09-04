@@ -30,24 +30,17 @@ class student:
                 f"Possible Days: {possible_days}\n"
                 f"Rankings: {self.enrichment_preference}")
 
-    def retrieve_assignment(self):
-        return self.enrichment_preference[self.assignment]
-
     def assign_preference(self, rank, enrichment_program):
         """Enrichment program is an enrichment class object"""
         self.enrichment_preference[rank] = enrichment_program
 
     def randomize_assignment(self, alpha=None):
-        #if alpha is None, randomize everything
-        if alpha is None:
-            for day in self.assignment.keys():
-                # 1st filter preferences for day
+        for day in self.assignment.keys():
+            if (alpha is None) or (random.random() < alpha):
                 valid_prefs = dict(filter(lambda e: day in e[1].timeslot, self.enrichment_preference.items()))
                 valid_prefs.update({0: self.enrichment_preference[0]})
                 pref_list = [x for x in valid_prefs.keys()]
                 self.assignment[day] = random.choice(pref_list)
 
-
-        #if alpha is a probability, randomize independently with probability alpha
         return
 

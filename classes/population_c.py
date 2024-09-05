@@ -201,7 +201,7 @@ class population:
             elif row['name'] < row['min']:
                 class_size_penalty += (row['min'] - row['name']) * 10
             elif row['enrichment'] != 'waitlist':
-                class_size_penalty += row['max'] - row['name'] #add a flat penalty for each unfilled spot
+                class_size_penalty += 4*(row['max'] - row['name']) #add a flat penalty for each unfilled spot
 
         return choice_score + class_size_penalty + waitlist_penalty
 
@@ -211,10 +211,15 @@ class population:
         penalty = 0
         for student in student_list:
             preferences = [x for (k, x) in student.assignment.items()]
-            if np.sum(preferences) == 0:
-                continue
-            else:
-                filt_prefs = filter(lambda a: a != 0, preferences)
-                penalty += np.mean([x-1 for x in filt_prefs])
+
+            rank_penalty = np.min(preferences) - 1
+            zeros_penalty = np.sum(preferences == 0) / 2
+            # if np.sum(preferences) == 0:
+            #     continue
+            # else:
+            #     filt_prefs = filter(lambda a: a != 0, preferences)
+            #     penalty += np.mean([x-1 for x in filt_prefs])
+
+            penalty += rank_penalty + zeros_penalty
 
         return penalty

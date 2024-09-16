@@ -12,21 +12,29 @@ def process_registration_form(df_csv, enrichment_dict):
             " ".join([row["Student's First Name"], row["Student's Last Name"]]),
             row["Child's Teacher"] )
 
-        for ranking in range(4):
+        for ranking in range(6):
             if ranking == 0:
-                str = '1st'
+                grade_str = '1st'
             elif ranking == 1:
-                str = '2nd'
+                grade_str = '2nd'
             elif ranking == 2:
-                str = '3rd'
+                grade_str = '3rd'
             else:
-                str = f"{ranking+1}th"
+                grade_str = f"{ranking+1}th"
 
-            preference = row[f"Rank your child's {str} choice of classes"]
+            preference = row[f"Rank your child's {grade_str} choice of classes"]
 
             if preference == preference:
                 enrichment_name = clean_enrichment_name(preference)
-                s.assign_preference(ranking + 1, enrichment_dict[enrichment_name])
+
+                if enrichment_name == 'Boondoggle and bracelets':
+                    if int(s.grade) > 3:
+                        enrichment_name += ' 4-5'
+                    else:
+                        enrichment_name += ' 2-3'
+
+                if enrichment_name not in [str(x) for x in s.enrichment_preference.values()]:
+                    s.assign_preference(ranking + 1, enrichment_dict[enrichment_name])
 
         student_list.append(s)
 

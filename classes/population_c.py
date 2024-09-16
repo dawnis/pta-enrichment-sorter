@@ -43,6 +43,33 @@ class population:
         for x in self.students:
             x.randomize_assignment()
 
+    def produce_class_assignment_sheet(self):
+        """Outputs current assignments for student population"""
+        student_rows = []
+        for student in self.students:
+            for (k, v) in student.assignment.items():
+                student_rows.append({
+                    "Name": student.name,
+                    "Grade": student.grade,
+                    "Email": student.email,
+                    "Teacher": student.teacher,
+                    "Enrichment": str(student.enrichment_preference[v]),
+                    "Day": k,
+                    "Ranking": v,
+                    "Num Classes Requested": student.num_classes
+                })
+
+        worksheet = pd.DataFrame(student_rows)
+
+        # Get students that are waitlist only
+        wdf_filt = pd.DataFrame([x.name for x in self.get_waitlist_only()], columns = ["Name"])
+
+        waitlist = pd.merge(wdf_filt, worksheet, on=['Name'], how='left')
+
+        worksheet_filt = worksheet.query("Enrichment != 'waitlist'").copy()
+
+        return pd.concat([worksheet_filt, waitlist], axis=0)
+
     def report_multi_asignments(self):
         """Reports any students with multiple assignments"""
         for student in self.students:
@@ -198,7 +225,8 @@ class population:
         #compute scores for determining if class size bounds (min or max) are violated
         edf_count = self.class_counts(student_list)
         e_limits = self.enrichment_limits()
-        edf_counts = pd.merge(edf_count, e_limits, on=['enrichment'])
+        edf_counts = pd.merge(edf_count, e_limits, on=['enrichment'], how='outer')
+        edf_counts = edf_counts.fillna(0)
 
         #compute a penalty for each student on wait list
         waitlist_penalty =  len(self.get_waitlist_only())**2

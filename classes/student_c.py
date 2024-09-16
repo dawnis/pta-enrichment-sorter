@@ -6,7 +6,7 @@ from classes.enrichment_c import gen_waitlist
 
 class student:
 
-    def __init__(self, email, grade, age, name, teacher):
+    def __init__(self, email, grade, age, name, teacher, num_classes):
         """
         :param email: str
         :param grade: str
@@ -21,6 +21,7 @@ class student:
         self.age = age
         self.name = name
         self.teacher = teacher
+        self.num_classes = num_classes
         self.assignment = {}
         self.enrichment_preference = {
             0: gen_waitlist()
@@ -39,6 +40,7 @@ class student:
 
         return (f"Name: {self.name}\n"
                 f"Grade: {self.grade}\n"
+                f"Classes Requested: {self.num_classes}\n"
                 f"Enrichments Assigned: {enrichments_assigned}\n"
                 f"Possible Days: {possible_days}\n"
                 f"Rankings: {self.enrichment_preference}")

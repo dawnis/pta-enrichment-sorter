@@ -53,6 +53,15 @@ class population:
                 print("\n")
         return
 
+    def report_invalid_preferences(self):
+        """Reports any students with no possible assignments"""
+        for student in self.students:
+            preferences = [x for (k, x) in student.assignment.items()]
+            if len(preferences) == 0:
+                print(student)
+                print("\n")
+        return
+
     def display_student(self, student_name):
         student_lookup = filter(lambda x: x.name.lower().startswith(student_name.lower()), self.students)
         for s in student_lookup:

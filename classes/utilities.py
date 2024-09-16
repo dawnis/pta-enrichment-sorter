@@ -10,7 +10,8 @@ def process_registration_form(df_csv, enrichment_dict):
             row["Child's Grade"],
             row["Child's Age"],
             " ".join([row["Student's First Name"], row["Student's Last Name"]]),
-            row["Child's Teacher"] )
+            row["Child's Teacher"],
+            row['Number of classes'])
 
         for ranking in range(6):
             if ranking == 0:

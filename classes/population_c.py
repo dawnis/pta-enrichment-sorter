@@ -47,6 +47,7 @@ class population:
         """Outputs current assignments for student population"""
         student_rows = []
         for student in self.students:
+            num_assignments = np.sum([y > 0 for (x, y) in student.assignment.items()])
             for (k, v) in student.assignment.items():
                 student_rows.append({
                     "Name": student.name,
@@ -56,7 +57,8 @@ class population:
                     "Enrichment": str(student.enrichment_preference[v]),
                     "Day": k,
                     "Ranking": v,
-                    "Num Classes Requested": student.num_classes
+                    "Requested": student.num_classes,
+                    "Assigned": num_assignments
                 })
 
         worksheet = pd.DataFrame(student_rows)
